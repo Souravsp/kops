@@ -24,6 +24,7 @@ import (
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	kops "k8s.io/kops/pkg/apis/kops"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func init() {
@@ -2170,6 +2171,7 @@ func Convert_kops_KopeioNetworkingSpec_To_v1alpha1_KopeioNetworkingSpec(in *kops
 func autoConvert_v1alpha1_KubeAPIServerConfig_To_kops_KubeAPIServerConfig(in *KubeAPIServerConfig, out *kops.KubeAPIServerConfig, s conversion.Scope) error {
 	out.Image = in.Image
 	out.DisableBasicAuth = in.DisableBasicAuth
+	out.DisableTokenAuth = in.DisableTokenAuth
 	out.LogLevel = in.LogLevel
 	out.CloudProvider = in.CloudProvider
 	out.SecurePort = in.SecurePort
@@ -2233,6 +2235,9 @@ func autoConvert_v1alpha1_KubeAPIServerConfig_To_kops_KubeAPIServerConfig(in *Ku
 	out.EtcdQuorumRead = in.EtcdQuorumRead
 	out.MinRequestTimeout = in.MinRequestTimeout
 	out.TargetRamMb = in.TargetRamMb
+	out.Profiling = in.Profiling
+	out.ServiceAccountLookup = in.ServiceAccountLookup
+	out.RepairMalformedUpdates = in.RepairMalformedUpdates
 	return nil
 }
 
@@ -2244,6 +2249,7 @@ func Convert_v1alpha1_KubeAPIServerConfig_To_kops_KubeAPIServerConfig(in *KubeAP
 func autoConvert_kops_KubeAPIServerConfig_To_v1alpha1_KubeAPIServerConfig(in *kops.KubeAPIServerConfig, out *KubeAPIServerConfig, s conversion.Scope) error {
 	out.Image = in.Image
 	out.DisableBasicAuth = in.DisableBasicAuth
+	out.DisableTokenAuth = in.DisableTokenAuth
 	out.LogLevel = in.LogLevel
 	out.CloudProvider = in.CloudProvider
 	out.SecurePort = in.SecurePort
@@ -2307,6 +2313,9 @@ func autoConvert_kops_KubeAPIServerConfig_To_v1alpha1_KubeAPIServerConfig(in *ko
 	out.EtcdQuorumRead = in.EtcdQuorumRead
 	out.MinRequestTimeout = in.MinRequestTimeout
 	out.TargetRamMb = in.TargetRamMb
+	out.Profiling = in.Profiling
+	out.ServiceAccountLookup = in.ServiceAccountLookup
+	out.RepairMalformedUpdates = in.RepairMalformedUpdates
 	return nil
 }
 
@@ -2349,6 +2358,7 @@ func autoConvert_v1alpha1_KubeControllerManagerConfig_To_kops_KubeControllerMana
 	out.HorizontalPodAutoscalerUpscaleDelay = in.HorizontalPodAutoscalerUpscaleDelay
 	out.HorizontalPodAutoscalerUseRestClients = in.HorizontalPodAutoscalerUseRestClients
 	out.FeatureGates = in.FeatureGates
+	out.Profiling = in.Profiling
 	return nil
 }
 
@@ -2391,6 +2401,7 @@ func autoConvert_kops_KubeControllerManagerConfig_To_v1alpha1_KubeControllerMana
 	out.HorizontalPodAutoscalerUpscaleDelay = in.HorizontalPodAutoscalerUpscaleDelay
 	out.HorizontalPodAutoscalerUseRestClients = in.HorizontalPodAutoscalerUseRestClients
 	out.FeatureGates = in.FeatureGates
+	out.Profiling = in.Profiling
 	return nil
 }
 
@@ -2495,6 +2506,9 @@ func autoConvert_v1alpha1_KubeSchedulerConfig_To_kops_KubeSchedulerConfig(in *Ku
 	out.Master = in.Master
 	out.LogLevel = in.LogLevel
 	out.Image = in.Image
+	if err := v1.Convert_bool_To_Pointer_bool(&in.Profiling, &out.Profiling, s); err != nil {
+		return err
+	}
 	if in.LeaderElection != nil {
 		in, out := &in.LeaderElection, &out.LeaderElection
 		*out = new(kops.LeaderElectionConfiguration)
@@ -2518,6 +2532,9 @@ func autoConvert_kops_KubeSchedulerConfig_To_v1alpha1_KubeSchedulerConfig(in *ko
 	out.Master = in.Master
 	out.LogLevel = in.LogLevel
 	out.Image = in.Image
+	if err := v1.Convert_Pointer_bool_To_bool(&in.Profiling, &out.Profiling, s); err != nil {
+		return err
+	}
 	if in.LeaderElection != nil {
 		in, out := &in.LeaderElection, &out.LeaderElection
 		*out = new(LeaderElectionConfiguration)
@@ -2606,6 +2623,10 @@ func autoConvert_v1alpha1_KubeletConfigSpec_To_kops_KubeletConfigSpec(in *Kubele
 	out.RootDir = in.RootDir
 	out.AuthenticationTokenWebhook = in.AuthenticationTokenWebhook
 	out.AuthenticationTokenWebhookCacheTTL = in.AuthenticationTokenWebhookCacheTTL
+	out.EventQPS = in.EventQPS
+	out.MakeIptablesUtilChains = in.MakeIptablesUtilChains
+	out.CAdvisorPort = in.CAdvisorPort
+	out.ProtectKernelDefaults = in.ProtectKernelDefaults
 	return nil
 }
 
@@ -2683,6 +2704,10 @@ func autoConvert_kops_KubeletConfigSpec_To_v1alpha1_KubeletConfigSpec(in *kops.K
 	out.RootDir = in.RootDir
 	out.AuthenticationTokenWebhook = in.AuthenticationTokenWebhook
 	out.AuthenticationTokenWebhookCacheTTL = in.AuthenticationTokenWebhookCacheTTL
+	out.EventQPS = in.EventQPS
+	out.MakeIptablesUtilChains = in.MakeIptablesUtilChains
+	out.CAdvisorPort = in.CAdvisorPort
+	out.ProtectKernelDefaults = in.ProtectKernelDefaults
 	return nil
 }
 

@@ -179,6 +179,14 @@ type KubeletConfigSpec struct {
 	AuthenticationTokenWebhook *bool `json:"authenticationTokenWebhook,omitempty" flag:"authentication-token-webhook"`
 	// AuthenticationTokenWebhook sets the duration to cache responses from the webhook token authenticator. Default is 2m. (default 2m0s)
 	AuthenticationTokenWebhookCacheTTL *metav1.Duration `json:"authenticationTokenWebhookCacheTtl,omitempty" flag:"authentication-token-webhook-cache-ttl"`
+	// EventQps If > 0, limit event creations per second to this value. If 0, unlimited.
+	EventQPS *int32 `json:"eventQps,omitempty" flag:"event-qps"`
+	// MakeIptablesUtilChains will ensure iptables utility rules are present on host.
+	MakeIptablesUtilChains *bool `json:"makeIptablesUtilChains,omitempty" flag:"make-iptables-util-chains"`
+	// CAdvisorPort The port of the localhost cAdvisor endpoint (set to 0 to disable) (default 4194)
+	CAdvisorPort *int32 `json:"cadvisorPort,omitempty" flag:"cadvisor-port"`
+	// ProtectKernelDefaults Default kubelet behaviour for kernel tuning. If set, kubelet errors if any of kernel tunables is different than kubelet defaults.
+	ProtectKernelDefaults *bool `json:"protectKernelDefaults,omitempty" flag:"protect-kernel-defaults"`
 }
 
 // KubeProxyConfig defines the configuration for a proxy
@@ -229,6 +237,8 @@ type KubeAPIServerConfig struct {
 	Image string `json:"image,omitempty"`
 	// DisableBasicAuth removes the --basic-auth-file flag
 	DisableBasicAuth bool `json:"disableBasicAuth,omitempty"`
+	// EnableTokenAuth removes the --token-auth-file flag
+	DisableTokenAuth bool `json:"disableTokenAuth,omitempty"`
 	// LogLevel is the logging level of the api
 	LogLevel int32 `json:"logLevel,omitempty" flag:"v" flag-empty:"0"`
 	// CloudProvider is the name of the cloudProvider we are using, aws, gce etcd
@@ -370,6 +380,12 @@ type KubeAPIServerConfig struct {
 
 	// Memory limit for apiserver in MB (used to configure sizes of caches, etc.)
 	TargetRamMb int32 `json:"targetRamMb,omitempty" flag:"target-ram-mb" flag-empty:"0"`
+	// Enable profiling via web interface.
+	Profiling *bool `json:"profiling,omitempty" flag:"profiling"`
+	// Verify service account token
+	ServiceAccountLookup *bool `json:"serviceAccountLookup,omitempty" flag:"service-account-lookup"`
+	// Repair malformed requests from clients
+	RepairMalformedUpdates *bool `json:"repairMalformedUpdates,omitempty" flag:"repair-malformed-updates"`
 }
 
 // KubeControllerManagerConfig is the configuration for the controller
@@ -435,6 +451,8 @@ type KubeControllerManagerConfig struct {
 	HorizontalPodAutoscalerUseRestClients *bool `json:"horizontalPodAutoscalerUseRestClients,omitempty" flag:"horizontal-pod-autoscaler-use-rest-clients"`
 	// FeatureGates is set of key=value pairs that describe feature gates for alpha/experimental features.
 	FeatureGates map[string]string `json:"featureGates,omitempty" flag:"feature-gates"`
+	// Enable profiling via web interface.
+	Profiling *bool `json:"profiling,omitempty" flag:"profiling"`
 }
 
 // CloudControllerManagerConfig is the configuration of the cloud controller
@@ -472,6 +490,8 @@ type KubeSchedulerConfig struct {
 	LogLevel int32 `json:"logLevel,omitempty" flag:"v"`
 	// Image is the docker image to use
 	Image string `json:"image,omitempty"`
+	// Enable profiling via web interface
+	Profiling bool `json:"profiling,omitempty" flag:"profiling"`
 	// LeaderElection defines the configuration of leader election client.
 	LeaderElection *LeaderElectionConfiguration `json:"leaderElection,omitempty"`
 	// UsePolicyConfigMap enable setting the scheduler policy from a configmap

@@ -249,11 +249,6 @@ crossbuild-nodeup-in-docker:
 	docker run --name=nodeup-build-${UNIQUE} -e STATIC_BUILD=yes -e VERSION=${VERSION} -v ${MAKEDIR}:/go/src/k8s.io/kops golang:${GOVERSION} make -C /go/src/k8s.io/kops/ crossbuild-nodeup
 	docker cp nodeup-build-${UNIQUE}:/go/.build .
 
-.PHONY: ${DIST}/darwin/amd64/kops
-${DIST}/darwin/amd64/kops: ${BINDATA_TARGETS}
-	mkdir -p ${DIST}
-	GOOS=darwin GOARCH=amd64 go build ${GCFLAGS} -a ${EXTRA_BUILDFLAGS} -o $@ ${LDFLAGS}"${EXTRA_LDFLAGS} -X k8s.io/kops.Version=${VERSION} -X k8s.io/kops.GitVersion=${GITSHA}" k8s.io/kops/cmd/kops
-
 .PHONY: ${DIST}/linux/amd64/kops
 ${DIST}/linux/amd64/kops: ${BINDATA_TARGETS}
 	mkdir -p ${DIST}
@@ -266,48 +261,43 @@ ${DIST}/windows/amd64/kops.exe: ${BINDATA_TARGETS}
 
 
 .PHONY: crossbuild
-crossbuild: ${DIST}/windows/amd64/kops.exe ${DIST}/darwin/amd64/kops ${DIST}/linux/amd64/kops
+crossbuild: ${DIST}/windows/amd64/kops.exe ${DIST}/linux/amd64/kops
 
 .PHONY: crossbuild-in-docker
 crossbuild-in-docker:
 	docker pull golang:${GOVERSION} # Keep golang image up to date
-	docker run --name=kops-build-${UNIQUE} -e STATIC_BUILD=yes -e VERSION=${VERSION} -v ${MAKEDIR}:/go/src/k8s.io/kops golang:${GOVERSION} make -C /go/src/k8s.io/kops/ crossbuild
+	docker run --name=kops-build-${UNIQUE} -e STATIC_BUILD=yes -e VERSION=${VERSION} -v /c/Users/ssourav/.ssh/kops/src/k8s.io/kops:/go/src/k8s.io/kops golang:${GOVERSION} make -C /go/src/k8s.io/kops/ crossbuild
 	docker start kops-build-${UNIQUE}
 	docker exec kops-build-${UNIQUE} chown -R ${UID}:${GID} /go/src/k8s.io/kops/.build
-	docker cp kops-build-${UNIQUE}:/go/src/k8s.io/kops/.build .
+	docker cp kops-build-${UNIQUE}:/go/src/k8s.io/kops/.build ~/.ssh/kops/src/k8s.io/kops/.build
 	docker kill kops-build-${UNIQUE}
 	docker rm kops-build-${UNIQUE}
 
 .PHONY: kops-dist
 kops-dist: crossbuild-in-docker
-	mkdir -p ${DIST}
-	(${SHASUMCMD} ${DIST}/darwin/amd64/kops | cut -d' ' -f1) > ${DIST}/darwin/amd64/kops.sha1
-	(${SHASUMCMD} ${DIST}/linux/amd64/kops | cut -d' ' -f1) > ${DIST}/linux/amd64/kops.sha1
-	(${SHASUMCMD} ${DIST}/windows/amd64/kops.exe | cut -d' ' -f1) > ${DIST}/windows/amd64/kops.exe.sha1
+	mkdir -p ~/.ssh/kops/src/k8s.io/kops/.build/dist
+	(${SHASUMCMD} ~/.ssh/kops/src/k8s.io/kops/.build/dist/linux/amd64/kops | cut -d' ' -f1) > ~/.ssh/kops/src/k8s.io/kops/.build/dist/linux/amd64/kops.sha1
+	(${SHASUMCMD} ~/.ssh/kops/src/k8s.io/kops/.build/dist/windows/amd64/kops.exe | cut -d' ' -f1) > ~/.ssh/kops/src/k8s.io/kops/.build/dist/windows/amd64/kops.exe.sha1
 
 .PHONY: version-dist
 version-dist: nodeup-dist kops-dist protokube-export utils-dist
 	rm -rf ${UPLOAD}
 	mkdir -p ${UPLOAD}/kops/${VERSION}/linux/amd64/
-	mkdir -p ${UPLOAD}/kops/${VERSION}/darwin/amd64/
 	mkdir -p ${UPLOAD}/kops/${VERSION}/images/
 	mkdir -p ${UPLOAD}/utils/${VERSION}/linux/amd64/
-	cp ${DIST}/nodeup ${UPLOAD}/kops/${VERSION}/linux/amd64/nodeup
-	cp ${DIST}/nodeup.sha1 ${UPLOAD}/kops/${VERSION}/linux/amd64/nodeup.sha1
+	cp ~/.ssh/kops/src/k8s.io/kops/.build/dist/nodeup ${UPLOAD}/kops/${VERSION}/linux/amd64/nodeup
+	cp ~/.ssh/kops/src/k8s.io/kops/.build/dist/nodeup.sha1 ${UPLOAD}/kops/${VERSION}/linux/amd64/nodeup.sha1
 	cp ${IMAGES}/protokube.tar.gz ${UPLOAD}/kops/${VERSION}/images/protokube.tar.gz
 	cp ${IMAGES}/protokube.tar.gz.sha1 ${UPLOAD}/kops/${VERSION}/images/protokube.tar.gz.sha1
-	cp ${DIST}/linux/amd64/kops ${UPLOAD}/kops/${VERSION}/linux/amd64/kops
-	cp ${DIST}/linux/amd64/kops.sha1 ${UPLOAD}/kops/${VERSION}/linux/amd64/kops.sha1
-	cp ${DIST}/darwin/amd64/kops ${UPLOAD}/kops/${VERSION}/darwin/amd64/kops
-	cp ${DIST}/darwin/amd64/kops.sha1 ${UPLOAD}/kops/${VERSION}/darwin/amd64/kops.sha1
-	cp ${DIST}/linux/amd64/utils.tar.gz ${UPLOAD}/kops/${VERSION}/linux/amd64/utils.tar.gz
-	cp ${DIST}/linux/amd64/utils.tar.gz.sha1 ${UPLOAD}/kops/${VERSION}/linux/amd64/utils.tar.gz.sha1
+	cp ~/.ssh/kops/src/k8s.io/kops/.build/dist/linux/amd64/kops ${UPLOAD}/kops/${VERSION}/linux/amd64/kops
+	cp ~/.ssh/kops/src/k8s.io/kops/.build/dist/linux/amd64/kops.sha1 ${UPLOAD}/kops/${VERSION}/linux/amd64/kops.sha1
+	cp ~/.ssh/kops/src/k8s.io/kops/.build/dist/linux/amd64/utils.tar.gz ${UPLOAD}/kops/${VERSION}/linux/amd64/utils.tar.gz
+	cp ~/.ssh/kops/src/k8s.io/kops/.build/dist/linux/amd64/utils.tar.gz.sha1 ${UPLOAD}/kops/${VERSION}/linux/amd64/utils.tar.gz.sha1
 
 .PHONY: vsphere-version-dist
 vsphere-version-dist: nodeup-dist protokube-export
 	rm -rf ${UPLOAD}
 	mkdir -p ${UPLOAD}/kops/${VERSION}/linux/amd64/
-	mkdir -p ${UPLOAD}/kops/${VERSION}/darwin/amd64/
 	mkdir -p ${UPLOAD}/kops/${VERSION}/images/
 	mkdir -p ${UPLOAD}/utils/${VERSION}/linux/amd64/
 	cp ${DIST}/nodeup ${UPLOAD}/kops/${VERSION}/linux/amd64/nodeup
@@ -319,13 +309,11 @@ vsphere-version-dist: nodeup-dist protokube-export
 	make kops-dist
 	cp ${DIST}/linux/amd64/kops ${UPLOAD}/kops/${VERSION}/linux/amd64/kops
 	cp ${DIST}/linux/amd64/kops.sha1 ${UPLOAD}/kops/${VERSION}/linux/amd64/kops.sha1
-	cp ${DIST}/darwin/amd64/kops ${UPLOAD}/kops/${VERSION}/darwin/amd64/kops
-	cp ${DIST}/darwin/amd64/kops.sha1 ${UPLOAD}/kops/${VERSION}/darwin/amd64/kops.sha1
 	cp ${DIST}/windows/amd64/kops.exe ${UPLOAD}/kops/${VERSION}/windows/amd64/kops.exe
 
 .PHONY: upload
 upload: version-dist # Upload kops to S3
-	aws s3 sync --acl public-read ${UPLOAD}/ ${S3_BUCKET}
+	aws s3 sync --acl public-read ${UPLOAD}/ ${S3_BUCKET}  --profile ppg_coles
 
 # gcs-upload builds kops and uploads to GCS
 .PHONY: gcs-upload
@@ -396,7 +384,7 @@ protokube-builder-image:
 .PHONY: protokube-build-in-docker
 protokube-build-in-docker: protokube-builder-image
 	mkdir -p ${IMAGES} # We have to create the directory first, so docker doesn't mess up the ownership of the dir
-	docker run -t -e VERSION=${VERSION} -e HOST_UID=${UID} -e HOST_GID=${GID} -v `pwd`:/src protokube-builder /onbuild.sh
+	docker run -t -e VERSION=${VERSION} -e HOST_UID=${UID} -e HOST_GID=${GID} -v /c/Users/ssourav/.ssh/kops/src/k8s.io/kops:/src protokube-builder /onbuild.sh
 
 .PHONY: protokube-image
 protokube-image: protokube-build-in-docker
@@ -426,7 +414,7 @@ ${NODEUP}: ${BINDATA_TARGETS}
 nodeup-dist:
 	mkdir -p ${DIST}
 	docker pull golang:${GOVERSION} # Keep golang image up to date
-	docker run --name=nodeup-build-${UNIQUE} -e STATIC_BUILD=yes -e VERSION=${VERSION} -v ${MAKEDIR}:/go/src/k8s.io/kops golang:${GOVERSION} make -C /go/src/k8s.io/kops/ nodeup
+	docker run --name=nodeup-build-${UNIQUE} -e STATIC_BUILD=yes -e VERSION=${VERSION} -v /c/Users/ssourav/.ssh/kops/src/k8s.io/kops:/go/src/k8s.io/kops golang:${GOVERSION} make -C /go/src/k8s.io/kops/ nodeup
 	docker start nodeup-build-${UNIQUE}
 	docker exec nodeup-build-${UNIQUE} chown -R ${UID}:${GID} /go/src/k8s.io/kops/.build
 	docker cp nodeup-build-${UNIQUE}:/go/src/k8s.io/kops/.build/local/nodeup .build/dist/
@@ -459,7 +447,7 @@ dns-controller-push: dns-controller-image
 utils-dist:
 	docker build -t utils-builder images/utils-builder
 	mkdir -p ${DIST}/linux/amd64/
-	docker run -v `pwd`/.build/dist/linux/amd64/:/dist utils-builder /extract.sh
+	docker run -v /c/Users/ssourav/.ssh/kops/src/k8s.io/kops/.build/dist/linux/amd64/:/dist utils-builder /extract.sh
 
 # --------------------------------------------------
 # development targets
@@ -665,7 +653,6 @@ bazel-build-cli:
 
 .PHONY: bazel-crossbuild-kops
 bazel-crossbuild-kops:
-	bazel build --features=pure --platforms=@io_bazel_rules_go//go/toolchain:darwin_amd64 //cmd/kops/...
 	bazel build --features=pure --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 //cmd/kops/...
 	bazel build --features=pure --platforms=@io_bazel_rules_go//go/toolchain:windows_amd64 //cmd/kops/...
 
@@ -755,7 +742,6 @@ bazel-protokube-export:
 bazel-version-dist: bazel-crossbuild-nodeup bazel-crossbuild-kops bazel-protokube-export utils-dist
 	rm -rf ${BAZELUPLOAD}
 	mkdir -p ${BAZELUPLOAD}/kops/${VERSION}/linux/amd64/
-	mkdir -p ${BAZELUPLOAD}/kops/${VERSION}/darwin/amd64/
 	mkdir -p ${BAZELUPLOAD}/kops/${VERSION}/images/
 	mkdir -p ${BAZELUPLOAD}/utils/${VERSION}/linux/amd64/
 	cp bazel-bin/cmd/nodeup/linux_amd64_pure_stripped/nodeup ${BAZELUPLOAD}/kops/${VERSION}/linux/amd64/nodeup
@@ -764,8 +750,6 @@ bazel-version-dist: bazel-crossbuild-nodeup bazel-crossbuild-kops bazel-protokub
 	cp ${BAZELIMAGES}/protokube.tar.gz.sha1 ${BAZELUPLOAD}/kops/${VERSION}/images/protokube.tar.gz.sha1
 	cp bazel-bin/cmd/kops/linux_amd64_pure_stripped/kops ${BAZELUPLOAD}/kops/${VERSION}/linux/amd64/kops
 	(${SHASUMCMD} ${BAZELUPLOAD}/kops/${VERSION}/linux/amd64/kops | cut -d' ' -f1) > ${BAZELUPLOAD}/kops/${VERSION}/linux/amd64/kops.sha1
-	cp bazel-bin/cmd/kops/darwin_amd64_pure_stripped/kops ${BAZELUPLOAD}/kops/${VERSION}/darwin/amd64/kops
-	(${SHASUMCMD} ${BAZELUPLOAD}/kops/${VERSION}/darwin/amd64/kops | cut -d' ' -f1) > ${BAZELUPLOAD}/kops/${VERSION}/darwin/amd64/kops.sha1
 	cp ${DIST}/linux/amd64/utils.tar.gz ${BAZELUPLOAD}/kops/${VERSION}/linux/amd64/utils.tar.gz
 	cp ${DIST}/linux/amd64/utils.tar.gz.sha1 ${BAZELUPLOAD}/kops/${VERSION}/linux/amd64/utils.tar.gz.sha1
 
